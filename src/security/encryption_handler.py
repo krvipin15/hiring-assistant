@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+"""
+Encryption handler for managing sensitive data encryption and decryption.
+Uses Fernet symmetric encryption from the cryptography library.
+"""
+
 import os
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet, InvalidToken

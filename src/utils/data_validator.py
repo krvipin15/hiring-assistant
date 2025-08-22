@@ -2,6 +2,7 @@
 
 """
 Utility functions for validating and sanitizing user input.
+This includes email, phone number, and location validation.
 """
 
 import html
@@ -39,7 +40,7 @@ def sanitize_input(text: str) -> str:
     # Basic HTML escaping to prevent XSS
     return html.escape(text.strip()) if text else ""
 
-
+# Example usage
 if __name__ == "__main__":
     print(validate_email("vipinkr3000@gmail.com"))
     print(validate_phone("+91 8766312199"))
