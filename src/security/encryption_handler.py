@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-
 """
-Encryption handler for managing sensitive data encryption and decryption.
-Uses Fernet symmetric encryption from the cryptography library.
+This module provides the EncryptionManager class for secure symmetric encryption and decryption
+of text using Fernet (AES) from the cryptography library. The encryption key is loaded from
+the ENCRYPTION_KEY environment variable. Includes example usage for demonstration.
+
+Functions:
+    - encrypt(text: str | None) -> str: Encrypts the given text and returns the encrypted string.
+    - decrypt(encrypted_text: str | None) -> str: Decrypts the given encrypted string and returns the original text.
+
+Raises:
+    ValueError: If the encryption key is missing or invalid, or if decryption fails due to corrupted or invalid encrypted text.
 """
 
 import os

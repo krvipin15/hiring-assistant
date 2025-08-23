@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-
 """
-Database module that handles candidate data storage and retrieval.
-It uses SQLite for data storage and includes encryption for sensitive fields.
+This script defines the DatabaseManager class, which provides methods to create a candidates table,
+save candidate data with encrypted sensitive fields (phone number, email, location), and retrieve
+candidate records with decryption. It uses SQLite for storage and integrates with an EncryptionManager
+for data security. Example usage is provided for demonstration and testing purposes.
+
+Functions:
+    - save_candidate(candidate_data: Dict[str, Any], technical_responses: Dict[str, Any]) -> None: Saves a new candidate record with encrypted sensitive fields.
+    - get_candidate(candidate_id: int) -> Optional[Dict[str, Any]]: Retrieves a candidate record by ID and decrypts sensitive fields.
+
+Raises:
+    RuntimeError: If the candidate ID is invalid or if decryption fails.
 """
 
 import json

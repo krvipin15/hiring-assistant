@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-
 """
-Prompts Manager that generates conversation prompts for the Hiring Assistant Chatbot.
- - Greeting, information gathering, tech-stack declaration, technical question generation (3-5 Qs),
-   context handling, fallback, graceful exit, and secure handling of "reveal answers" requests.
- - Includes few-shot examples where they improve clarity.
+This module defines the PromptsManager class, which centralizes and generates structured prompt templates for a hiring assistant chatbot.
+It provides methods to create context-aware, professional, and user-friendly prompts for various stages of the candidate screening process,
+including greetings, information gathering, validation, technical question generation, acknowledgements, and conversation closure.
+The prompts are designed to ensure consistency, clarity, and adherence to best practices in candidate communication.
+
+Functions:
+    - get_greeting_prompt() -> str: Returns a greeting prompt for the candidate.
+    - get_fallback_prompt(user_input: str, current_context: str) -> str: Returns a fallback prompt for unclear or unexpected user input.
+    - get_information_gathering_prompt() -> str: Returns a prompt for gathering candidate information.
+    - get_validation_prompt(field_name: str) -> str: Returns a validation prompt for a specific field.
+    - get_technical_question_prompt() -> str: Returns a prompt for generating technical questions.
+    - get_acknowledgement_prompt() -> str: Returns a prompt for acknowledging candidate responses.
+    - get_conversation_closure_prompt() -> str: Returns a prompt for closing the conversation.
 """
 
-from typing import Dict, List
+from typing import Dict
 
 class PromptsManager:
-    # Conversation-ending keywords the chatbot must recognize (checked by the app logic)
-    EXIT_KEYWORDS: List[str] = ["exit", "quit", "cancel", "bye", "goodbye", "stop"]
-
     def __init__(self) -> None:
         """Initialize PromptsManager."""
         # Keep any reusable pieces centralized
@@ -29,11 +34,12 @@ class PromptsManager:
             CONTEXT: This is the first message shown to a candidate interacting with TalentScout's hiring assistant.
             INSTRUCTIONS:
             - Greet the candidate warmly and professionally.
-            - Briefly explain the assistant's purpose: an initial screening that collects basic details and asks tailored technical questions.
-            - State an estimated duration for this initial screening (10-20 minutes) and mention the candidate can stop at any time using the exit keywords listed.
+            - Briefly explain the assistant's purpose: an initial screening that collects basic details \
+                and asks tailored technical questions.
+            - State an estimated duration for this initial screening (10-20 minutes) and mention the candidate \
+                can stop at any time using the exit keywords listed.
             - Ask for the candidate's full name to begin.
             - Keep tone friendly, professional, and concise.
-            EXIT KEYWORDS: {', '.join(self.EXIT_KEYWORDS)}
             OUTPUT FORMAT: One short welcoming paragraph followed by a single direct question asking for the candidate's full name.
             FEW-SHOT EXAMPLES:
             - Example 1: Hello and welcome to TalentScout! I'm here to run a short initial screening to collect a few details \
@@ -42,6 +48,46 @@ class PromptsManager:
             - Example 2: Hi there — glad you joined TalentScout's hiring assistant. I'll collect some basic information and then \
                 ask 3–5 technical questions based on your tech stack; the whole process takes roughly 10–20 minutes. To stop anytime, \
                 use: exit, quit, cancel, bye, goodbye, stop. What's your full name?
+            """
+
+    def get_fallback_prompt(self, user_input: str, current_context: str) -> str:
+        """
+        Provide meaningful responses when the chatbot does not understand the user input
+        or when unexpected inputs are received. It should not deviate from the Purpose.
+        """
+        return f"""\
+            CONTEXT: The candidate provided: \"{user_input}\" while we were trying to {current_context}.
+            INSTRUCTIONS:
+            - If the input is unclear or unrelated, politely acknowledge that it wasn’t understood.
+            - Restate what specific information is needed in one short sentence.
+            - Offer a short corrected example of the expected response OR re-ask the original question.
+            - If the user requests to 'reveal answers' or access solution keys:
+                * Refuse politely, explaining that official answers cannot be shared to protect assessment integrity.
+                * Instead, provide safe alternatives:
+                    - Offer constructive feedback,
+                    - Give helpful hints, or
+                    - Suggest they ask for clarification on a specific question they attempted.
+            - Always maintain a polite, professional, and non-judgmental tone.
+            OUTPUT FORMAT:
+            - A single short clarification if input is unclear/unexpected.
+            - A refusal + alternative if input is an attempt to reveal answers.
+            EXAMPLES:
+            - Unclear input: I'm sorry — I didn’t understand that. Could you please share your current city and \
+                country (e.g., 'Bengaluru, India')?
+            - Attempt to reveal answers: I can’t provide official answer keys or solutions. But I can give you feedback \
+                on one of your answers or clarify what the question was asking. Which question would you like help with?
+            """
+
+    def get_validation_error_prompt(self, field_name: str) -> str:
+        """Prompt for asking the candidate to correct an invalid field entry."""
+        hint = self.validation_hints.get(field_name, f"Please provide a valid {field_name}.")
+        return f"""\
+            CONTEXT: Candidate provided invalid '{field_name}' and must be asked to correct it.
+            INSTRUCTIONS:
+            - Explain the issue briefly and provide the expected format or range.
+            - Re-ask the field in one short sentence.
+            OUTPUT FORMAT: One short validation message + the re-request.
+            EXAMPLE: {hint}
             """
 
     def get_information_gathering_prompt(self, field_name: str, current_info: Dict | None = None) -> str:
@@ -68,7 +114,8 @@ class PromptsManager:
             "experience_years": "How many years of professional experience do you have?",
             "desired_positions": "Which position(s) are you applying for or interested in?",
             "current_location": "What city and country are you currently located in?",
-            "tech_stack": "Please list the programming languages, frameworks, databases, and tools you are proficient in (comma separated)."
+            "tech_stack": "Please list the programming languages, frameworks, databases, and \
+                tools you are proficient in (comma separated)."
         }
         example_q = examples.get(field_name, f"Could you please provide your {field_name}?")
 
@@ -97,7 +144,8 @@ class PromptsManager:
             - Encourage the candidate and be professional.
             - Do not repeat their full tech stack back verbatim; summarize briefly ("technologies you listed").
             OUTPUT FORMAT: A short transition paragraph and an introductory sentence announcing the first technical question.
-            EXAMPLE: Great — thanks for that information. I'll now ask 3–5 technical questions based on the technologies you listed to better understand your experience level. Let's begin with the first question:
+            EXAMPLE: Great — thanks for that information. I'll now ask 3–5 technical questions based on the technologies \
+                you listed to better understand your experience level. Let's begin with the first question:
             """
 
     def get_question_generation_prompt(self, tech_stack: str, experience_years: int) -> str:
@@ -117,8 +165,10 @@ class PromptsManager:
             Input: tech_stack = "Python, Django, PostgreSQL"; experience_years = 3
             Expected output (JSON array only):
             [
-            "Explain how Django's ORM handles relationships and give an example of when you'd use select_related versus prefetch_related.",
-            "How would you design and optimize a SQL query in PostgreSQL that joins three tables to minimize read time? Provide the main strategies you would use.",
+            "Explain how Django's ORM handles relationships and give an example of when you'd use \
+                select_related versus prefetch_related.",
+            "How would you design and optimize a SQL query in PostgreSQL that joins three tables to minimize read time? \
+                Provide the main strategies you would use.",
             "Describe how you would implement authentication and session management in a Django app intended for production."
             ]
             """
@@ -135,20 +185,6 @@ class PromptsManager:
             {few_shot}
             OUTPUT: The assistant's response must be exactly a JSON array of strings (e.g., [\"Q1\",\"Q2\",\"Q3\"])."""
 
-    def get_end_conversation_prompt(self) -> str:
-        """Concluding prompt: thanks, next steps, timeline, contact info."""
-        return """\
-            CONTEXT: The initial screening is complete.
-            INSTRUCTIONS:
-            - Thank the candidate for their time.
-            - Briefly state what happens next (review by hiring team).
-            - Provide a realistic timeline (e.g., 2-3 business days).
-            - Give a contact or support note ("if you have questions, contact...") — leave the actual contact tokenized for the application to inject.
-            - End positively and professionally.
-            OUTPUT FORMAT: A short concluding paragraph mentioning next steps and timeline.
-            EXAMPLE: Thank you for completing the initial screening. Our hiring team will review your responses and get back to you within 2-3 business days with next steps. If you have any questions, please contact our recruiting team (contact info provided on the Careers page). Have a great day!
-            """
-
     def get_acknowledgement_prompt(self, user_response: str, field_name: str = "") -> str:
         """Brief, friendly acknowledgement without repeating the user's response."""
         return f"""\
@@ -160,28 +196,21 @@ class PromptsManager:
             OUTPUT FORMAT: One short acknowledgement sentence.
             EXAMPLE: Got it — thanks!"""
 
-    def get_fallback_prompt(self, user_input: str, current_context: str) -> str:
-        """
-        Robust fallback for unclear input.
-        - Politely say the input wasn't understood.
-        - Rephrase the original question or provide the exact data needed.
-        - If the user asked to see 'answers' (attempt to reveal model's test/expected answers), refuse and redirect.
-        """
-        # The fallback contains two flows: generic unclear input and explicit "reveal answers" refusal instruction.
-        return f"""\
-            CONTEXT: The candidate provided: \"{user_input}\" while we were trying to {current_context}.
+    def get_end_conversation_prompt(self) -> str:
+        """Concluding prompt: thanks, next steps, timeline, contact info."""
+        return """\
+            CONTEXT: The initial screening is complete.
             INSTRUCTIONS:
-            - If the user's message appears unrelated or unclear, say you didn't understand and restate what specific information is needed (one short sentence).
-            - Provide a corrected short example of the expected response or re-ask the question.
-            - If the candidate attempts to 'reveal' or 'see' the correct answers to the technical questions (i.e., requests model's internal answers or a solution key), DO NOT provide them. Instead:
-                * Briefly refuse: explain that answer keys or model solution texts are not shared to preserve assessment integrity.
-                * Offer a safe alternative: offer constructive feedback, hints, or suggest the candidate ask for clarification on a specific question they answered.
-            - Keep tone polite and non-judgmental.
-            OUTPUT FORMAT: A single short clarification OR a refusal + alternative if the user asked to reveal answers.
-            EXAMPLES:
-            - Unclear input: I'm sorry — I didn't quite get that. Could you please tell me your current city and country (e.g., 'Bengaluru, India')?
-            - Attempt to reveal answers: I can't share official answer keys or solution texts from the assessment. If you'd like, \
-                I can give constructive feedback on one of your answers or clarify what the question was asking. Which question would you like feedback on?
+            - Thank the candidate for their time.
+            - Briefly state what happens next (review by hiring team).
+            - Provide a realistic timeline (e.g., 2-3 business days).
+            - Give a contact or support note ("if you have questions, contact...") — leave the actual contact tokenized \
+                for the application to inject.
+            - End positively and professionally.
+            OUTPUT FORMAT: A short concluding paragraph mentioning next steps and timeline.
+            EXAMPLE: Thank you for completing the initial screening. Our hiring team will review your responses and get \
+                back to you within 2-3 business days with next steps. If you have any questions, please contact our recruiting \
+                team (contact info provided on the Careers page). Have a great day!
             """
 
     def get_graceful_exit_prompt(self) -> str:
@@ -193,17 +222,6 @@ class PromptsManager:
             - Mention that the hiring team will follow up if applicable.
             - Keep it brief and professional.
             OUTPUT FORMAT: One or two short sentences.
-            EXAMPLE: Thank you for your time — your information has been saved. Our recruiting team will review it and contact you if there are next steps. Goodbye!
-            """
-
-    def get_validation_error_prompt(self, field_name: str) -> str:
-        """Prompt for asking the candidate to correct an invalid field entry."""
-        hint = self.validation_hints.get(field_name, f"Please provide a valid {field_name}.")
-        return f"""\
-            CONTEXT: Candidate provided invalid '{field_name}' and must be asked to correct it.
-            INSTRUCTIONS:
-            - Explain the issue briefly and provide the expected format or range.
-            - Re-ask the field in one short sentence.
-            OUTPUT FORMAT: One short validation message + the re-request.
-            EXAMPLE: {hint}
+            EXAMPLE: Thank you for your time — your information has been saved. Our recruiting team will review it and contact you \
+                if there are next steps. Goodbye!
             """

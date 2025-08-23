@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-
 """
-Utility functions for validating and sanitizing user input.
-This includes email, phone number, and location validation.
+This script provides functions to validate the format and deliverability of email addresses,
+the validity of international phone numbers, and the existence of geographic locations using
+the OpenStreetMap Nominatim API.
+
+Functions:
+    - validate_email(email: str) -> bool: Checks if an email address is valid and deliverable.
+    - validate_phone(phone: str) -> bool: Checks if a phone number is valid according to international standards.
+    - validate_location(location: str) -> bool: Checks if a location exists using geocoding.
 """
 
 import requests
@@ -37,6 +42,6 @@ def validate_location(location: str) -> bool:
 
 # Example usage
 if __name__ == "__main__":
-    print(validate_email("vipinkr3000@gmail.com"))
-    print(validate_phone("+91 8766312199"))
-    print(validate_location("Meerut, India"))
+    print(validate_email("abc@xyz.com"))          # False
+    print(validate_phone("+91 2451253377"))       # False
+    print(validate_location("New Delhi, India"))  # True
