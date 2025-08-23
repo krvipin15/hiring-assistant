@@ -1,0 +1,3 @@
+"""
+TalentScout Hiring Assistant Package
+"""

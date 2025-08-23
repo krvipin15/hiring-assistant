@@ -9,8 +9,10 @@ import os
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet, InvalidToken
 
+
 # Load environment variables
 load_dotenv()
+
 
 # Class for managing encryption and decryption
 class EncryptionManager:
@@ -42,6 +44,7 @@ class EncryptionManager:
             return decrypted_text.decode()
         except InvalidToken:
             raise ValueError("Invalid or corrupted encrypted text. Decryption failed.")
+
 
 # Example usage
 if __name__ == "__main__":

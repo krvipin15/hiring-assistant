@@ -98,6 +98,7 @@ class DatabaseManager:
         except Exception as e:
             raise RuntimeError(f"Error retrieving candidate {candidate_id}: {e}") from e
 
+
 # Example usage
 if __name__ == "__main__":
     # Initialize the database manager

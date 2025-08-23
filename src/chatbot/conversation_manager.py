@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-This module manages the conversation flow for the TalentScout hiring assistant chatbot.
+This module manages the conversation flow for the hiring assistant chatbot.
 Responsible for handling user inputs, maintaining conversation state, and coordinating with other components.
 """
 
@@ -9,10 +9,12 @@ import os
 import json
 from openai import OpenAI
 from typing import Tuple, List
-from prompts_manager import PromptsManager
+from chatbot.prompts_manager import PromptsManager
 from src.database.database_manager import DatabaseManager
-from src.utils.data_validator import validate_email, validate_phone
+from src.utils.data_validator import validate_email, validate_phone, validate_location
 
+
+# Class to manage conversation state
 class ConversationState:
     GREETING = "greeting"
     COLLECTING_INFO = "collecting_info"
@@ -20,6 +22,8 @@ class ConversationState:
     TECHNICAL_QUESTIONS = "technical_questions"
     ENDED = "ended"
 
+
+# Class to manage conversation flow
 class ConversationManager:
     def __init__(self):
         # Initialize OpenAI client with OpenRouter
@@ -47,8 +51,7 @@ class ConversationManager:
         self.awaiting_field = None
 
     def process_message(self, user_input: str) -> Tuple[str, bool]:
-        """Main message processing logic"""
-
+        """Process user input and manage conversation flow"""
         # Check for exit keywords first
         if self._is_exit_keyword(user_input):
             return self._handle_graceful_exit()
@@ -177,6 +180,8 @@ class ConversationManager:
             return False
         elif field_name == "phone_number" and not validate_phone(value):
             return False
+        elif field_name == "current_location" and not validate_location(value):
+            return False
         elif field_name == "experience_years":
             try:
                 years = int(value)
@@ -185,7 +190,7 @@ class ConversationManager:
                 value = str(years)
             except ValueError:
                 return False
-        elif not value:  # Empty value check for other fields
+        elif not value:  
             return False
 
         self.candidate_data[field_name] = value
@@ -267,7 +272,7 @@ class ConversationManager:
         exit_keywords = ["quit", "exit", "bye", "goodbye", "stop", "end"]
         return any(keyword in user_input.lower() for keyword in exit_keywords)
 
-    def _save_candidate_data(self):
+    def _save_candidate_data(self) -> None:
         """Save candidate data to database"""
         if self.candidate_data:
             self.db_manager.save_candidate(self.candidate_data, self.technical_responses)
