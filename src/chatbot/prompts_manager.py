@@ -100,7 +100,7 @@ class PromptsManager:
             EXAMPLE: Great — thanks for that information. I'll now ask 3–5 technical questions based on the technologies you listed to better understand your experience level. Let's begin with the first question:
             """
 
-    def get_technical_question_generation_prompt(self, tech_stack: str, experience_years: int) -> str:
+    def get_question_generation_prompt(self, tech_stack: str, experience_years: int) -> str:
         """
         Generate 3-5 technical interview questions.
         - Theoretical questions and no coding tasks.
